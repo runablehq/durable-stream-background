@@ -20,6 +20,7 @@ export default function AgentChat() {
   const [activeRunId, setActiveRunId] = useState<string | null>(null)
   const [input, setInput] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [agentWorking, setAgentWorking] = useState(false)
 
   const handleNewRun = async (prompt: string) => {
     setSubmitting(true)
@@ -106,7 +107,7 @@ export default function AgentChat() {
 
       <main className="main-panel">
         {activeRunId ? (
-          <RunView runId={activeRunId} />
+          <RunView runId={activeRunId} onWorkingChange={setAgentWorking} />
         ) : (
           <div className="empty-state">
             Submit a prompt to start an agent run
@@ -119,9 +120,9 @@ export default function AgentChat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={activeRunId ? "Send a follow-up message…" : "Start a new agent run…"}
-              disabled={submitting}
+              disabled={submitting || agentWorking}
             />
-            <button type="submit" disabled={submitting || !input.trim()}>
+            <button type="submit" disabled={submitting || agentWorking || !input.trim()}>
               {activeRunId ? "Send" : "Run"}
             </button>
           </form>
@@ -131,7 +132,7 @@ export default function AgentChat() {
   )
 }
 
-function RunView({ runId }: { runId: string }) {
+function RunView({ runId, onWorkingChange }: { runId: string; onWorkingChange?: (working: boolean) => void }) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const db = useAgentDB(runId)
 
@@ -202,6 +203,10 @@ function RunView({ runId }: { runId: string }) {
   const isWorking = timeline.some(
     (s) => s.kind === "agent_response" && !s.done && !s.error
   )
+
+  useEffect(() => {
+    onWorkingChange?.(isWorking)
+  }, [isWorking, onWorkingChange])
 
   return (
     <div className="messages">
