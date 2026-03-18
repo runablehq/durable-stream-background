@@ -1,0 +1,27 @@
+{
+  "name": "sdk",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "bun src/scripts/build.ts",
+    "dev": "bun run build && bun --hot src/api.ts",
+    "worker": "bun src/worker.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^3.0.118",
+    "ai": "^6.0.116",
+    "bullmq": "^5.71.0",
+    "hono": "^4.12.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.3.6"
+  }
+}
