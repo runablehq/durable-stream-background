@@ -22,6 +22,9 @@ app.post("/api/chat", async (c) => {
 // Background agent endpoint — start new conversation
 app.post("/api/agent", async (c) => {
   const { prompt } = await c.req.json();
+  if (typeof prompt !== "string" || !prompt.trim()) {
+    return c.json({ error: "prompt is required" }, 400);
+  }
   const runId = crypto.randomUUID();
 
   await DurableStream.create({
@@ -48,6 +51,9 @@ app.post("/api/agent", async (c) => {
 app.post("/api/agent/:runId/message", async (c) => {
   const { runId } = c.req.param();
   const { text } = await c.req.json();
+  if (typeof text !== "string" || !text.trim()) {
+    return c.json({ error: "text is required" }, 400);
+  }
 
   const streamUrl = `${STREAM_SERVER_URL}/v1/stream/${runId}`;
 

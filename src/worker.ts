@@ -10,11 +10,7 @@ const worker = new Worker(
     switch (job.name) {
       case "agent-run": {
         const { prompt, runId } = job.data;
-        try {
-          await runAgentToStream({ prompt, runId });
-        } catch (err) {
-          throw err;
-        }
+        await runAgentToStream({ prompt, runId });
         break;
       }
       default:

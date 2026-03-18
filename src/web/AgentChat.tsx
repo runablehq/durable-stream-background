@@ -29,11 +29,15 @@ export default function AgentChat() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ prompt }),
       })
+      if (!res.ok) throw new Error(`Server error: ${res.status}`)
       const { runId } = await res.json()
+      if (!runId) throw new Error("Server did not return a runId")
       const entry: RunEntry = { id: runId, prompt, createdAt: Date.now() }
       setRuns((prev) => [entry, ...prev])
       setActiveRunId(runId)
       setInput("")
+    } catch (err) {
+      console.error("Failed to start agent run:", err)
     } finally {
       setSubmitting(false)
     }
@@ -43,12 +47,15 @@ export default function AgentChat() {
     if (!activeRunId) return
     setSubmitting(true)
     try {
-      await fetch(`/api/agent/${activeRunId}/message`, {
+      const res = await fetch(`/api/agent/${activeRunId}/message`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text }),
       })
+      if (!res.ok) throw new Error(`Server error: ${res.status}`)
       setInput("")
+    } catch (err) {
+      console.error("Failed to send follow-up:", err)
     } finally {
       setSubmitting(false)
     }
@@ -150,54 +157,38 @@ function RunView({ runId }: { runId: string }) {
 
   // Merge collections into timeline rows sorted by _seq, then build timeline
   const timeline = useMemo(() => {
-    const rows: TimelineRow[] = []
+    function makeRow(
+      overrides: Partial<TimelineRow> & { seq: number; kind: TimelineRow["kind"]; key: string }
+    ): TimelineRow {
+      return {
+        messageFrom: null, messageText: null, messageTimestamp: null,
+        runStatus: null, stepStatus: null, stepDurationMs: null,
+        textKey: null, toolCallId: null, toolName: null, toolArgs: null,
+        toolResult: null, toolStatus: null, errorMessage: null,
+        ...overrides,
+      }
+    }
 
-    for (const m of inboxData as any[]) {
-      rows.push({
-        seq: m._seq ?? 0, kind: "message", key: m.key,
-        messageFrom: m.from, messageText: m.text, messageTimestamp: m.timestamp,
-        runStatus: null, stepStatus: null, stepDurationMs: null,
-        textKey: null, toolCallId: null, toolName: null, toolArgs: null,
-        toolResult: null, toolStatus: null, errorMessage: null,
-      })
-    }
-    for (const r of runsData as any[]) {
-      rows.push({
-        seq: r._seq ?? 0, kind: "run", key: r.key,
-        messageFrom: null, messageText: null, messageTimestamp: null,
-        runStatus: r.status, stepStatus: null, stepDurationMs: null,
-        textKey: null, toolCallId: null, toolName: null, toolArgs: null,
-        toolResult: null, toolStatus: null, errorMessage: null,
-      })
-    }
-    for (const t of textsData as any[]) {
-      rows.push({
-        seq: t._seq ?? 0, kind: "text", key: t.key,
-        messageFrom: null, messageText: null, messageTimestamp: null,
-        runStatus: null, stepStatus: null, stepDurationMs: null,
-        textKey: t.key, toolCallId: null, toolName: null, toolArgs: null,
-        toolResult: null, toolStatus: null, errorMessage: null,
-      })
-    }
-    for (const tc of toolCallsData as any[]) {
-      rows.push({
-        seq: tc._seq ?? 0, kind: "tool_call", key: tc.key,
-        messageFrom: null, messageText: null, messageTimestamp: null,
-        runStatus: null, stepStatus: null, stepDurationMs: null,
-        textKey: null, toolCallId: tc.key, toolName: tc.tool_name,
-        toolArgs: tc.args, toolResult: tc.result, toolStatus: tc.status,
-        errorMessage: null,
-      })
-    }
-    for (const e of errorsData as any[]) {
-      rows.push({
-        seq: e._seq ?? 0, kind: "error", key: e.key,
-        messageFrom: null, messageText: null, messageTimestamp: null,
-        runStatus: null, stepStatus: null, stepDurationMs: null,
-        textKey: null, toolCallId: null, toolName: null, toolArgs: null,
-        toolResult: null, toolStatus: null, errorMessage: e.message,
-      })
-    }
+    const rows: TimelineRow[] = [
+      ...(inboxData as any[]).map((m) =>
+        makeRow({ seq: m._seq ?? 0, kind: "message", key: m.key,
+          messageFrom: m.from, messageText: m.text, messageTimestamp: m.timestamp })
+      ),
+      ...(runsData as any[]).map((r) =>
+        makeRow({ seq: r._seq ?? 0, kind: "run", key: r.key, runStatus: r.status })
+      ),
+      ...(textsData as any[]).map((t) =>
+        makeRow({ seq: t._seq ?? 0, kind: "text", key: t.key, textKey: t.key })
+      ),
+      ...(toolCallsData as any[]).map((tc) =>
+        makeRow({ seq: tc._seq ?? 0, kind: "tool_call", key: tc.key,
+          toolCallId: tc.key, toolName: tc.tool_name, toolArgs: tc.args,
+          toolResult: tc.result, toolStatus: tc.status })
+      ),
+      ...(errorsData as any[]).map((e) =>
+        makeRow({ seq: e._seq ?? 0, kind: "error", key: e.key, errorMessage: e.message })
+      ),
+    ]
 
     rows.sort((a, b) => a.seq - b.seq)
 

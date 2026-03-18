@@ -19,7 +19,8 @@ export const agent = new ToolLoopAgent({
           let result;
           try {
             result = await eval(`(async () => (${code}))()`);
-          } catch {
+          } catch (e) {
+            if (!(e instanceof SyntaxError)) throw e;
             result = await eval(`(async () => { ${code} })()`);
           }
           return { ok: true, result: String(result ?? "undefined") };

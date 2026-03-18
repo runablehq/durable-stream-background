@@ -129,7 +129,7 @@ describe("buildTimeline", () => {
       stepStatus: null,
       stepDurationMs: null,
       textKey: null,
-            toolCallId: null,
+      toolCallId: null,
       toolName: null,
       toolArgs: null,
       toolResult: null,
