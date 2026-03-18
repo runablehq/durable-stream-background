@@ -16,7 +16,13 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
     "@ai-sdk/react": "^3.0.118",
+    "@durable-streams/client": "^0.2.2",
+    "@durable-streams/server": "^0.2.2",
+    "@durable-streams/state": "^0.2.2",
+    "@standard-schema/spec": "^1.1.0",
+    "@tanstack/react-db": "^0.1.77",
     "ai": "^6.0.116",
     "bullmq": "^5.71.0",
     "hono": "^4.12.8",
