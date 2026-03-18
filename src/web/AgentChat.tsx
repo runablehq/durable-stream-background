@@ -64,7 +64,7 @@ export default function AgentChat() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!input.trim() || submitting) return
+    if (!input.trim() || submitting || agentWorking) return
     const text = input.trim()
 
     if (activeRunId) {
