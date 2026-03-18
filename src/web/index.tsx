@@ -1,4 +1,4 @@
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import AgentChat from "./AgentChat";
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(<AgentChat />);
